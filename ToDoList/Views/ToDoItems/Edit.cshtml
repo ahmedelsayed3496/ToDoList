@@ -1,0 +1,113 @@
+﻿@model ToDoItem
+
+@{
+    ViewData["Title"] = "Edit Task";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center">Edit Task</h1>
+    <form id="editTaskForm" action="/ToDoItems/Edit/@Model.Id" method="post" enctype="multipart/form-data" onsubmit="return validateDeadline()">
+        <div class="mb-3">
+            <label for="Title" class="form-label">Title</label>
+            <input type="text" id="Title" name="Title" class="form-control" value="@Model.Title" required>
+        </div>
+        <div class="mb-3">
+            <label for="Description" class="form-label">Description</label>
+            <textarea id="Description" name="Description" class="form-control" required>@Model.Description</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="Deadline" class="form-label">Deadline</label>
+            <input type="datetime-local" id="Deadline" name="Deadline" class="form-control" value="@Model.Deadline.ToString("yyyy-MM-ddTHH:mm")" required>
+            <small id="deadline-error" class="text-danger" style="display: none;">❌ You cannot select a past date!</small>
+        </div>
+        <div class="mb-3">
+            <label for="File" class="form-label">Attach File</label>
+            <input type="file" id="File" name="File" class="form-control" onchange="showFilePreview()">
+        </div>
+
+        <div id="filePreview" class="mt-2"></div>
+
+        <button type="submit" class="btn btn-primary">Update Task</button>
+        <a href="/ToDoItems" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+    function showFilePreview() {
+        var fileInput = document.getElementById("File");
+        var file = fileInput.files[0];
+        var previewContainer = document.getElementById("filePreview");
+        previewContainer.innerHTML = ""; // Clear previous preview
+
+        if (file) {
+            var fileType = file.type;
+            var fileName = document.createElement("span");
+            fileName.textContent = file.name;
+
+            if (fileType.startsWith("image/")) {
+                var img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                img.style.maxWidth = "20%";
+                img.style.maxHeight = "20%";
+                img.style.borderRadius = "5px";
+                img.style.marginTop = "10px";
+                previewContainer.appendChild(img);
+            } else {
+                var icon = document.createElement("i");
+                icon.style.fontSize = "24px";
+                icon.style.marginRight = "5px";
+
+                if (fileType === "application/pdf") {
+                    icon.className = "fas fa-file-pdf text-danger";
+                } else if (fileType.startsWith("video/")) {
+                    icon.className = "fas fa-file-video text-warning";
+                } else if (fileType.startsWith("audio/")) {
+                    icon.className = "fas fa-file-audio text-info";
+                } else if (fileType === "application/zip" || fileType.includes("compressed")) {
+                    icon.className = "fas fa-file-archive text-secondary";
+                } else if (fileType === "application/msword" || fileType.includes("officedocument")) {
+                    icon.className = "fas fa-file-word text-primary";
+                } else if (fileType === "application/vnd.ms-excel" || fileType.includes("spreadsheet")) {
+                    icon.className = "fas fa-file-excel text-success";
+                } else {
+                    icon.className = "fas fa-file text-dark"; // Generic file icon
+                }
+
+                var fileWrapper = document.createElement("div");
+                fileWrapper.appendChild(icon);
+                fileWrapper.appendChild(fileName);
+                previewContainer.appendChild(fileWrapper);
+            }
+        }
+    }
+
+    function validateDeadline() {
+        let deadlineInput = document.getElementById("Deadline");
+        let errorMessage = document.getElementById("deadline-error");
+        let selectedDateTime = new Date(deadlineInput.value);
+        let currentDateTime = new Date();
+
+        if (selectedDateTime <= currentDateTime) {
+            errorMessage.style.display = "block";
+            alert("❌ Error: You cannot select a past date!");
+            return false; // Prevent form submission
+        } else {
+            errorMessage.style.display = "none";
+            return true; // Allow form submission
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let deadlineInput = document.getElementById("Deadline");
+        let errorMessage = document.getElementById("deadline-error");
+
+        if (deadlineInput) {
+            deadlineInput.addEventListener("input", function () {
+                validateDeadline();
+            });
+
+            // Validate on page load (in case an old date is already set)
+            validateDeadline();
+        }
+    });
+</script>

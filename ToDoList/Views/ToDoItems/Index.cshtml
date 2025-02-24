@@ -1,0 +1,100 @@
+﻿@model IEnumerable<ToDoItem>
+
+@{
+    ViewData["Title"] = "To-Do List";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center">To-Do List</h1>
+    <p class="text-center">
+        <a href="/ToDoItems/Create" class="btn btn-success">Create New Task</a>
+    </p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Deadline</th>
+                <th>File</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.Description</td>
+                    <td>@item.Deadline</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.File))
+                        {
+                            <span>@item.File</span>
+                            <a href="~/files/@item.File" class="btn btn-primary btn-sm" download>Download</a>
+                        }
+                        else
+                        {
+                            <span>No file attached</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="/ToDoItems/Edit/@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(event, @item.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    
+    function confirmDelete(event, id) {
+        event.preventDefault(); // Prevents the default action (link navigation)
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/ToDoItems/Delete/${id}`, { method: "DELETE" })  // Change to "POST" if needed
+                    .then(response => {
+                        if (response.ok) {
+                            Swal.fire({
+                                title: "Deleted!",
+                                text: "Your task has been deleted.",
+                                icon: "success",
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload(); // Refresh page after deletion
+                            });
+                        } else {
+                            Swal.fire("Error!", "Failed to delete the task.", "error");
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire("Error!", "Something went wrong.", "error");
+                    });
+            }
+        });
+    }
+
+    setTimeout(() => {
+        document.querySelector(".alert").style.display = "none";
+    }, 3000);
+</script>
